@@ -43,15 +43,12 @@ variable "condition" {
     type    = list(map(string))
     default = []
 }
-variable "priority" {
-    type    = number
-}
 variable "https_listeners" {
-    type    = list(map(string))
+    type    = any
     default = []
 }
 variable "http_listeners" {
-    type    = list(map(string))
+    type    = any
     default = []
 }
 variable "listener_ssl_policy_default" {

@@ -68,53 +68,79 @@ resource "aws_alb_listener" "http_listeners" {
 # Listener Rule #
 ################
 
-#resource "aws_alb_listener_rule" "http_listener_rule" {
-#    count = var.create_lb ? length(var.http_listeners) : 0
-#
-#    listener_arn = "${aws_alb_listener.http_listeners[0].arn}"
-#
-#    priority     = "${var.priority}"
+resource "aws_alb_listener_rule" "http_listener_rule" {
+    count = var.create_lb ? length(var.http_listeners) : 0
 
-#    dynamic "action" {
-#        for_each    = var.action
-#        content {
-#            target_group_arn    = action.value.target_group_arn
-#            type                = action.value.type
-#        }
-#    }
+    listener_arn = aws_alb_listener.http_listeners[0].arn
 
-#    dynamic "condition" {
-#        for_each    = var.condition
-#        content {
-#            field   = condition.value.field
-#            values  =  [ condition.value.values ]
-#        }
-#    }
-#}
+    priority     = var.http_listeners[count.index]["priority"]
+
+    dynamic "action" {
+        for_each    = var.action
+        content {
+            target_group_arn    = action.value.target_group_arn
+            type                = action.value.type
+
+            dynamic "redirect" {
+                for_each = length(keys(lookup(action.value, "redirect", {}))) == 0 ? [] : [lookup(action.value, "redirect", {})]
+                content {
+                    port        = redirect.value.port
+                    protocol    = redirect.value.protocol
+                    status_code = redirect.value.status_code
+                }
+            }
+        }
+    }
+
+    dynamic "condition" {
+        for_each    = var.condition
+        content {
+            dynamic "path_pattern" {
+                for_each = length(keys(lookup(condition.value, "path_pattern", {}))) == 0 ? [] : [lookup(condition.value, "path_pattern", {})]
+                content {
+                    values  = path_pattern.value.values
+                }
+            }
+        }
+    }
+}
 
 
 
-#resource "aws_alb_listener_rule" "https_listener_rule" {
-#    count = var.create_lb ? length(var.https_listeners) : 0
-#
-#    listener_arn = "${aws_alb_listener.https_listeners[0].arn}"
-#
-#    priority     = "${var.priority}"
-#
-#    dynamic "action" {
-#        for_each    = var.action
-#        content {
-#            target_group_arn    = action.value.target_group_arn
-#            type                = action.value.type
-#        }
-#    }
-#
-#    dynamic "condition" {
-#        for_each    = var.condition
-#        content {
-#            field   = condition.value.field
-#            values  =  [ condition.value.values ]
-#        }
-#    }
-#}
+resource "aws_alb_listener_rule" "https_listener_rule" {
+    count = var.create_lb ? length(var.https_listeners) : 0
+
+    listener_arn = aws_alb_listener.https_listeners[0].arn
+
+    priority     = var.https_listeners[count.index]["priority"]
+
+    dynamic "action" {
+        for_each    = var.action
+        content {
+            target_group_arn    = action.value.target_group_arn
+            type                = action.value.type
+
+            dynamic "redirect" {
+                for_each = length(keys(lookup(action.value, "redirect", {}))) == 0 ? [] : [lookup(action.value, "redirect", {})]
+                content {
+                    port        = redirect.value.port
+                    protocol    = redirect.value.protocol
+                    status_code = redirect.value.status_code
+                }
+            }
+        }
+    }
+
+    dynamic "condition" {
+        for_each    = var.condition
+        content {
+            dynamic "path_pattern" {
+                for_each = length(keys(lookup(condition.value, "path_pattern", {}))) == 0 ? [] : [lookup(condition.value, "path_pattern", {})]
+                content {
+                    values  = path_pattern.value.values
+                }
+            }
+        }
+    }
+}
 
