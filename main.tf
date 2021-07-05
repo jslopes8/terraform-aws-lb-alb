@@ -71,11 +71,11 @@ resource "aws_alb_listener" "http_listeners" {
 resource "aws_lb_listener_rule" "lb_https" {
   count = var.create_lb ? length(var.https_listeners) : 0
     
-  listener_arn  = aws_lb_listener.lb_http.0.arn
-  priority      = lookup(var.service_load_balancing_https[count.index], "priority_rule", null)
+  listener_arn  = aws_lb_listener.lb.0.arn
+  priority      = lookup(var.https_listeners[count.index], "priority_rule", null)
 
   dynamic "action" {
-    for_each = length(keys(lookup(var.service_load_balancing_https[count.index], "redirect_rule", {}))) == 0 ? [] : [lookup(var.service_load_balancing_https[count.index], "redirect_rule", {})]
+    for_each = length(keys(lookup(var.https_listeners[count.index], "redirect_rule", {}))) == 0 ? [] : [lookup(var.https_listeners[count.index], "redirect_rule", {})]
     content {
       type    = lookup(action.value, "type", null)
 
@@ -92,15 +92,15 @@ resource "aws_lb_listener_rule" "lb_https" {
   }
 
   dynamic "action" {
-    for_each = length(keys(lookup(var.service_load_balancing_https[count.index], "forward_rule", {}))) == 0 ? [] : [lookup(var.service_load_balancing_https[count.index], "forward_rule", {})]
+    for_each = length(keys(lookup(var.https_listeners[count.index], "forward_rule", {}))) == 0 ? [] : [lookup(var.https_listeners[count.index], "forward_rule", {})]
     content {
       type              = lookup(action.value, "type", null)
-      target_group_arn  = aws_lb_target_group.lb_https.0.arn
+      target_group_arn  = lookup(action.value, "target_group_arn", null)
     }
   }
 
   dynamic "condition" {
-    for_each = length(keys(lookup(var.service_load_balancing_https[count.index], "condition", {}))) == 0 ? [] : [lookup(var.service_load_balancing_https[count.index], "condition", {})]
+    for_each = length(keys(lookup(var.https_listeners[count.index], "condition", {}))) == 0 ? [] : [lookup(var.https_listeners[count.index], "condition", {})]
     content {
       dynamic "path_pattern" {
         for_each = length(keys(lookup(condition.value, "path_pattern", {}))) == 0 ? [] : [lookup(condition.value, "path_pattern", {})]
